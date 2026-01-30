@@ -1,0 +1,36 @@
+services:
+  # 1. THE CACHE & QUEUE (Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: zme_redis
+    restart: always
+    command: redis-server --appendonly yes  # Ensures data is saved to disk
+    volumes:
+      - redis_data:/data
+    networks:
+      - zme_net
+    ports:
+      - "6379:6379"  # Exposed for local testing only
+
+  # 2. THE VECTOR BRAIN (Qdrant)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: zme_qdrant
+    restart: always
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - zme_net
+    ports:
+      - "6333:6333"  # API Port
+      - "6334:6334"  # GRPC Port
+
+# 3. THE PRIVATE NETWORK (Security)
+networks:
+  zme_net:
+    driver: bridge
+
+# 4. PERSISTENT STORAGE (Data Survival)
+volumes:
+  redis_data:
+  qdrant_data:
