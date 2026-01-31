@@ -29,6 +29,42 @@ func main() {
         })
     })
 
+        // ... inside main() ...
+
+    // NEW: The Generate Route
+    app.Post("/generate", func(c *fiber.Ctx) error {
+        // 1. Read User Input
+        type Request struct {
+            Prompt string `json:"prompt"`
+        }
+        var req Request
+        if err := c.BodyParser(&req); err != nil {
+            return c.Status(400).SendString("Invalid Input")
+        }
+
+        // 2. Create the Job Ticket
+        job := models.MemeJob{
+            ID:       "12345", // Hardcoded for testing
+            Prompt:   req.Prompt,
+            Template: "default_template",
+            Status:   "pending",
+        }
+
+        // 3. Send to Redis
+        if err := database.PushJobToQueue(job); err != nil {
+            return c.Status(500).SendString("Failed to queue job")
+        }
+
+        return c.JSON(fiber.Map{
+            "message": "Job sent to the Muscle!",
+            "job_id":  job.ID,
+        })
+    })
+
+    // ... app.Listen ...
+
+
+
     // 4. Start Server
     port := config.Get("PORT", "3000")
     log.Fatal(app.Listen(":" + port))
